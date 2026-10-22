@@ -1,0 +1,597 @@
+
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Project Report — Automated Web Security Scanner</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.7;
+    color: #1f2328;
+    background: #ffffff;
+    padding: 40px 20px 60px;
+  }
+
+  .page {
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+  /* ── Cover ── */
+  .cover {
+    text-align: center;
+    padding: 48px 0 40px;
+    border-bottom: 2px solid #e5e7eb;
+    margin-bottom: 40px;
+  }
+  .cover .badge {
+    display: inline-block;
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    padding: 4px 12px;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #57606a;
+    margin-bottom: 16px;
+  }
+  .cover h1 {
+    font-size: 26px;
+    font-weight: 700;
+    color: #1f2328;
+    margin-bottom: 10px;
+  }
+  .cover .subtitle {
+    font-size: 15px;
+    color: #57606a;
+    margin-bottom: 28px;
+  }
+  .cover .meta-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 32px;
+    max-width: 420px;
+    margin: 0 auto;
+    text-align: left;
+  }
+  .cover .meta-grid dt {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #57606a;
+    padding-top: 8px;
+    border-top: 1px solid #e5e7eb;
+  }
+  .cover .meta-grid dd {
+    font-size: 13px;
+    color: #1f2328;
+    font-weight: 500;
+    padding-top: 2px;
+  }
+
+  /* ── Sections ── */
+  h2 {
+    font-size: 17px;
+    font-weight: 700;
+    color: #1f2328;
+    margin: 36px 0 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2328;
+    margin: 20px 0 6px;
+  }
+  p { margin-bottom: 10px; color: #1f2328; }
+  ul, ol { padding-left: 20px; margin-bottom: 10px; }
+  li { margin-bottom: 4px; }
+
+  /* ── Callout ── */
+  .callout {
+    background: #fff8e1;
+    border-left: 3px solid #f59e0b;
+    padding: 10px 14px;
+    border-radius: 0 4px 4px 0;
+    margin: 14px 0;
+    font-size: 13px;
+    color: #57606a;
+  }
+  .callout strong { color: #1f2328; }
+
+  /* ── Tables ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin: 12px 0 18px;
+  }
+  thead tr { background: #f7f8fa; }
+  th {
+    text-align: left;
+    padding: 8px 10px;
+    font-weight: 600;
+    border: 1px solid #e5e7eb;
+    color: #1f2328;
+  }
+  td {
+    padding: 7px 10px;
+    border: 1px solid #e5e7eb;
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: #fafafa; }
+
+  /* ── Severity chips ── */
+  .chip {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .chip-high   { background: #fee2e2; color: #b91c1c; }
+  .chip-medium { background: #fef3c7; color: #92400e; }
+  .chip-pass   { background: #d1fae5; color: #065f46; }
+
+  /* ── Code ── */
+  code {
+    font-family: "Consolas", "Courier New", monospace;
+    font-size: 12px;
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: #3b82d4;
+  }
+
+  /* ── Architecture diagram ── */
+  .arch {
+    background: #f7f8fa;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 20px 24px;
+    margin: 14px 0;
+    font-size: 13px;
+  }
+  .arch-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .arch-row:last-child { margin-bottom: 0; }
+  .arch-box {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    min-width: 160px;
+    text-align: center;
+  }
+  .arch-box.accent { border-color: #3b82d4; color: #3b82d4; }
+  .arch-arrow { color: #57606a; font-size: 16px; flex: 0 0 auto; }
+  .arch-desc { color: #57606a; font-size: 12px; }
+
+  /* ── Footer ── */
+  .footer {
+    margin-top: 48px;
+    padding-top: 14px;
+    border-top: 1px solid #e5e7eb;
+    text-align: center;
+    font-size: 12px;
+    color: #57606a;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  
+  <div class="cover">
+    <div class="badge">Cybersecurity Project Report</div>
+    <h1>🔐 Automated Web Security Scanner</h1>
+    <p class="subtitle">A passive, read-only HTTP security header analyser<br />built with Python and Streamlit</p>
+    <dl class="meta-grid">
+      <dt>Project Type</dt>
+      <dd>Cybersecurity Tool</dd>
+      <dt>Language</dt>
+      <dd>Python 3.10+</dd>
+      <dt>Framework</dt>
+      <dd>Streamlit</dd>
+      <dt>Approach</dt>
+      <dd>Passive / Read-only</dd>
+      <dt>Key Libraries</dt>
+      <dd>requests, urllib.parse</dd>
+      <dt>Deployment</dt>
+      <dd>Local (localhost:8501)</dd>
+    </dl>
+  </div>
+
+  
+  <h2>1. Introduction</h2>
+  <p>
+    Web application security is a growing concern in modern software development. Many common
+    vulnerabilities — including Cross-Site Scripting (XSS), clickjacking, and man-in-the-middle
+    attacks — can be significantly mitigated through the correct configuration of HTTP security
+    response headers. Yet misconfigured or missing headers remain one of the most frequently
+    observed weaknesses in real-world web applications.
+  </p>
+  <p>
+    This project implements an <strong>Automated Web Security Scanner</strong>: an interactive
+    tool that allows a developer or security professional to assess the HTTP security posture of
+    a web server they own or control. The tool performs entirely passive, non-intrusive checks —
+    it reads response headers and reports findings with severity ratings and remediation
+    guidance, without sending any attack payloads or attempting to exploit vulnerabilities.
+  </p>
+
+  <div class="callout">
+    <strong>Ethical Use Statement:</strong> This tool is designed exclusively for use against
+    websites the operator owns or has explicit written permission to assess. Scanning
+    third-party websites without permission may be illegal and is strictly outside the intended
+    scope of this project.
+  </div>
+
+  
+  <h2>2. Objectives</h2>
+  <ul>
+    <li>Build a single-file Python application (<code>app.py</code>) covering both scanner logic and dashboard UI</li>
+    <li>Perform passive HTTP security header checks against a user-supplied URL</li>
+    <li>Detect missing or misconfigured security headers: CSP, HSTS, X-Content-Type-Options, X-Frame-Options</li>
+    <li>Perform a basic CORS configuration check by reading the <code>Access-Control-Allow-Origin</code> header</li>
+    <li>Classify each finding with a severity level (High / Medium / Pass)</li>
+    <li>Provide clear explanations and actionable remediation advice for each finding</li>
+    <li>Implement robust input validation and error handling (timeouts, SSL errors, connection failures)</li>
+    <li>Present results through a professional, user-friendly Streamlit dashboard</li>
+  </ul>
+
+  
+  <h2>3. Technologies Used</h2>
+  <table>
+    <thead>
+      <tr><th>Technology</th><th>Version</th><th>Role</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Python</td><td>3.10+</td><td>Core programming language</td></tr>
+      <tr><td>Streamlit</td><td>≥ 1.35.0</td><td>Web dashboard framework — renders the interactive UI</td></tr>
+      <tr><td>Requests</td><td>≥ 2.32.0</td><td>HTTP GET requests to retrieve response headers from the target</td></tr>
+      <tr><td>urllib.parse</td><td>Standard library</td><td>URL parsing and scheme validation before any network call</td></tr>
+    </tbody>
+  </table>
+
+  
+  <h2>4. System Architecture</h2>
+  <p>
+    The entire application is contained within a single file, <code>app.py</code>, organised
+    into three logical sections that follow a clean data-flow pipeline:
+  </p>
+
+  <div class="arch">
+    <div class="arch-row">
+      <div class="arch-box accent">User (Browser UI)</div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-desc">Enters URL, clicks Run Scan</div>
+    </div>
+    <div class="arch-row">
+      <div class="arch-box accent">Input Validation</div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-desc">urllib.parse checks scheme and hostname</div>
+    </div>
+    <div class="arch-row">
+      <div class="arch-box accent">Scanner Engine</div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-desc">Single requests.get() · 10s timeout · follow redirects</div>
+    </div>
+    <div class="arch-row">
+      <div class="arch-box accent">Check Functions</div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-desc">HTTPS · 4× security headers · CORS — each returns a finding dict</div>
+    </div>
+    <div class="arch-row">
+      <div class="arch-box accent">Streamlit Dashboard</div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-desc">Metrics row + severity-sorted expander cards with remediation</div>
+    </div>
+  </div>
+
+  <h3>4.1 Section Breakdown</h3>
+  <table>
+    <thead>
+      <tr><th>Section</th><th>Contents</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Section 1 — Constants &amp; Templates</strong></td>
+        <td>
+          <code>REQUEST_TIMEOUT</code> (10 s) and the <code>SECURITY_HEADERS</code> dictionary,
+          which centralises header names, failure explanations, remediation text, and default
+          severity for each of the four required headers.
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Section 2 — Scanner Engine</strong></td>
+        <td>
+          Pure functions: <code>validate_url()</code>, <code>check_https()</code>,
+          <code>fetch_response()</code>, <code>check_security_headers()</code>,
+          <code>check_cors()</code>, and <code>run_scan()</code>.
+          No Streamlit imports — fully testable in isolation.
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Section 3 — Streamlit Dashboard</strong></td>
+        <td>
+          <code>render_finding_card()</code> and <code>main()</code>. Handles all UI layout,
+          user interaction, spinner, metrics row, and finding cards.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  
+  <h2>5. Implemented Security Checks</h2>
+
+  <h3>5.1 HTTPS Usage</h3>
+  <p>
+    Inspects the URL scheme using <code>urllib.parse.urlparse()</code>. If the scheme is
+    <code>http</code>, the finding is rated <span class="chip chip-high">High</span> — plain
+    HTTP traffic is unencrypted and susceptible to man-in-the-middle (MITM) interception.
+    No network request is required for this check.
+  </p>
+
+  <h3>5.2 Content-Security-Policy (CSP)</h3>
+  <p>
+    Checks for the presence of the <code>Content-Security-Policy</code> response header.
+    CSP allows a server to declare trusted content sources, significantly reducing the attack
+    surface for Cross-Site Scripting (XSS) and data-injection attacks.
+    Absence is rated <span class="chip chip-high">High</span>.
+  </p>
+
+  <h3>5.3 Strict-Transport-Security (HSTS)</h3>
+  <p>
+    Checks for the <code>Strict-Transport-Security</code> header. HSTS instructs browsers to
+    communicate with the site exclusively over HTTPS, preventing SSL-stripping attacks and
+    accidental HTTP connections. Absence is rated <span class="chip chip-high">High</span>.
+  </p>
+
+  <h3>5.4 X-Content-Type-Options</h3>
+  <p>
+    Checks for the <code>X-Content-Type-Options: nosniff</code> header. Without it, some
+    browsers perform MIME-type sniffing, which can allow an attacker to cause a text file to
+    be interpreted as JavaScript. Absence is rated <span class="chip chip-medium">Medium</span>.
+  </p>
+
+  <h3>5.5 X-Frame-Options</h3>
+  <p>
+    Checks for the <code>X-Frame-Options</code> header, which prevents the page from being
+    embedded in an <code>&lt;iframe&gt;</code> on a different domain. Its absence makes the
+    site vulnerable to clickjacking, where an attacker layers an invisible frame over a
+    legitimate page to hijack user clicks.
+    Absence is rated <span class="chip chip-medium">Medium</span>.
+  </p>
+
+  <h3>5.6 CORS Configuration</h3>
+  <p>
+    Passively reads the <code>Access-Control-Allow-Origin</code> (ACAO) header.
+    If the value is <code>*</code> (wildcard), the finding is rated
+    <span class="chip chip-medium">Medium</span> — any third-party website can read responses
+    from this endpoint, which is a risk if the endpoint ever returns user-specific data.
+    A specific origin value or absence of the header both receive a
+    <span class="chip chip-pass">Pass</span>.
+  </p>
+
+  
+  <h2>6. Input Validation &amp; Error Handling</h2>
+
+  <h3>6.1 Input Validation</h3>
+  <p>
+    Before any network call is made, <code>validate_url()</code> uses
+    <code>urllib.parse.urlparse()</code> to verify:
+  </p>
+  <ul>
+    <li>The URL is non-empty</li>
+    <li>The scheme is strictly <code>http</code> or <code>https</code></li>
+    <li>A valid hostname (netloc) is present</li>
+  </ul>
+  <p>
+    Invalid input is rejected with a descriptive error message rendered via
+    <code>st.error()</code>, and execution halts with <code>st.stop()</code>.
+  </p>
+
+  <h3>6.2 Network Error Handling</h3>
+  <p>
+    The <code>fetch_response()</code> function wraps <code>requests.get()</code> in a
+    <code>try/except</code> block covering four exception classes:
+  </p>
+  <table>
+    <thead>
+      <tr><th>Exception</th><th>Cause</th><th>User-facing Message</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>requests.exceptions.Timeout</code></td>
+        <td>Server did not respond within 10 seconds</td>
+        <td>Timeout message with the configured timeout value</td>
+      </tr>
+      <tr>
+        <td><code>requests.exceptions.SSLError</code></td>
+        <td>Invalid or expired TLS certificate</td>
+        <td>SSL error with the exception detail</td>
+      </tr>
+      <tr>
+        <td><code>requests.exceptions.ConnectionError</code></td>
+        <td>DNS failure, refused connection, or network unreachable</td>
+        <td>Connection error with the exception detail</td>
+      </tr>
+      <tr>
+        <td><code>requests.exceptions.RequestException</code></td>
+        <td>Any other requests-level failure</td>
+        <td>Generic request failure message</td>
+      </tr>
+    </tbody>
+  </table>
+  <p>
+    On error, a <span class="chip chip-high">High</span> finding is added to the results list
+    instead of raising an unhandled exception. The user sees a clear message within the normal
+    scan results UI.
+  </p>
+
+  
+  <h2>7. Dashboard Design</h2>
+  <p>
+    The Streamlit dashboard is structured into five areas:
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Area</th><th>Component</th><th>Purpose</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Header</td>
+        <td><code>st.title</code>, <code>st.caption</code></td>
+        <td>Project title and ethical-use disclaimer</td>
+      </tr>
+      <tr>
+        <td>Sidebar</td>
+        <td><code>st.text_input</code>, <code>st.button</code></td>
+        <td>URL entry, scan trigger, checks list, ethical-use warning</td>
+      </tr>
+      <tr>
+        <td>Pre-scan Info</td>
+        <td><code>st.columns</code>, <code>st.markdown</code></td>
+        <td>Tool description, severity legend, usage instructions</td>
+      </tr>
+      <tr>
+        <td>Results</td>
+        <td><code>st.metric</code>, <code>st.expander</code></td>
+        <td>Summary counts (total / pass / warn / fail) + per-finding cards</td>
+      </tr>
+      <tr>
+        <td>Footer</td>
+        <td><code>st.caption</code></td>
+        <td>Responsible-use reminder</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>
+    Finding cards are ordered by severity — failures first, then warnings, then passes.
+    FAIL and WARN cards are auto-expanded so the most important issues are immediately visible.
+    Each card contains a <strong>Finding</strong> block (what was detected and why it matters)
+    and, for non-passing results, a <strong>Remediation</strong> block with a concrete fix.
+  </p>
+
+  
+  <h2>8. Data Flow</h2>
+  <p>The following describes the end-to-end data flow for a single scan:</p>
+  <ol>
+    <li>User enters a URL and clicks <strong>Run Scan</strong></li>
+    <li><code>validate_url()</code> checks scheme and hostname — halts on invalid input</li>
+    <li><code>check_https()</code> evaluates the scheme without a network call</li>
+    <li><code>fetch_response()</code> issues one <code>GET</code> request with a 10-second timeout</li>
+    <li>On success, <code>check_security_headers()</code> iterates over the four required headers</li>
+    <li><code>check_cors()</code> reads the ACAO header value</li>
+    <li><code>run_scan()</code> assembles all findings into a flat list of dicts</li>
+    <li>The dashboard counts severities, renders metrics, sorts findings, and displays expander cards</li>
+  </ol>
+
+  
+  <h2>9. Finding Data Model</h2>
+  <p>
+    Each finding is represented as a plain Python <code>dict</code> with four keys,
+    providing a consistent, predictable structure across all checks:
+  </p>
+  <table>
+    <thead>
+      <tr><th>Key</th><th>Type</th><th>Example Value</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>check</code></td><td>str</td><td><code>"Content-Security-Policy (CSP)"</code></td></tr>
+      <tr><td><code>status</code></td><td>str</td><td><code>"FAIL"</code> | <code>"WARN"</code> | <code>"PASS"</code></td></tr>
+      <tr><td><code>explanation</code></td><td>str</td><td>Human-readable description of what was found and why it matters</td></tr>
+      <tr><td><code>remediation</code></td><td>str</td><td>Concrete, actionable fix instruction</td></tr>
+    </tbody>
+  </table>
+
+  
+  <h2>10. Severity Model</h2>
+  <table>
+    <thead>
+      <tr><th>Status</th><th>Severity</th><th>Meaning</th><th>UI Colour</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="chip chip-high">FAIL</span></td>
+        <td>High</td>
+        <td>Missing or misconfigured control with direct security impact</td>
+        <td>Red — auto-expanded card</td>
+      </tr>
+      <tr>
+        <td><span class="chip chip-medium">WARN</span></td>
+        <td>Medium</td>
+        <td>Configuration that increases risk but may be intentional</td>
+        <td>Orange — auto-expanded card</td>
+      </tr>
+      <tr>
+        <td><span class="chip chip-pass">PASS</span></td>
+        <td>Informational</td>
+        <td>Control is present and configured</td>
+        <td>Green — collapsed card</td>
+      </tr>
+    </tbody>
+  </table>
+
+  
+  <h2>11. Limitations</h2>
+  <ul>
+    <li><strong>Header presence only:</strong> The tool checks for the existence of headers, not the correctness of their values (e.g., it does not validate whether a CSP policy is restrictive or overly permissive)</li>
+    <li><strong>Single endpoint:</strong> Headers are checked on the single URL provided. Other pages or API endpoints on the same server may have different header configurations</li>
+    <li><strong>No authentication:</strong> The scanner makes unauthenticated requests; headers that only apply behind a login are not assessed</li>
+    <li><strong>No active testing:</strong> By design, no payloads are injected and no active exploitation attempts are made — this is a feature, not a gap, given the passive-only requirement</li>
+    <li><strong>Firewall sensitivity:</strong> Some servers may block or alter responses to requests from automated user agents</li>
+  </ul>
+
+  
+  <h2>12. Potential Future Improvements</h2>
+  <ul>
+    <li>CSP policy strength analysis (e.g., detecting <code>unsafe-inline</code> or <code>unsafe-eval</code> directives)</li>
+    <li>HSTS <code>max-age</code> value validation (e.g., flagging values below the recommended 31,536,000 seconds)</li>
+    <li>Cookie security attribute checks (<code>Secure</code>, <code>HttpOnly</code>, <code>SameSite</code>)</li>
+    <li>Referrer-Policy and Permissions-Policy header checks</li>
+    <li>Exportable scan report (PDF or JSON download)</li>
+    <li>Multi-URL batch scanning</li>
+  </ul>
+
+  
+  <h2>13. Conclusion</h2>
+  <p>
+    The Automated Web Security Scanner successfully meets all defined objectives. It provides
+    a passive, safe, and user-friendly tool for identifying common HTTP security header
+    misconfigurations. The application is built entirely within a single Python file,
+    uses only two third-party libraries, and produces clear, actionable output that a
+    developer can act on immediately.
+  </p>
+  <p>
+    The project demonstrates practical application of cybersecurity concepts — including
+    transport security, content injection defences, framing attacks, and CORS — within
+    a real, working tool. Its passive-only design ensures it can be used responsibly and
+    legally on targets the operator controls.
+  </p>
+
+  
+  <div class="footer">
+    Made with IBM Bob  ·  Automated Web Security Scanner  ·  Cybersecurity Project
+  </div>
+
+</div>
+</body>
+</html>
